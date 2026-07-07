@@ -21,7 +21,7 @@ export default function ProjectsToolbar({
   onNewProject,
 }) {
   const hasActiveFilters =
-    filters.search || filters.categoryId || filters.year || filters.featured !== null;
+    filters.search || filters.category || filters.year || filters.featured !== null;
 
   return (
     <div className="mb-6 flex flex-col gap-3">
@@ -60,12 +60,12 @@ export default function ProjectsToolbar({
 
         <select
           className={selectClass}
-          value={filters.categoryId}
-          onChange={(e) => onFilterChange("categoryId", e.target.value)}
+          value={filters.category}
+          onChange={(e) => onFilterChange("category", e.target.value)}
         >
           <option value="">All categories</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>
+            <option key={c.id} value={c.name}>
               {c.name}
             </option>
           ))}

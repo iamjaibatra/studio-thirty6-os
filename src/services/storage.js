@@ -4,7 +4,8 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 /**
  * ASSUMED: `thumbnails` and `videos` buckets are public (public URLs are
- * used directly as thumbnail_url / video_url on the project row). If your
+ * used directly as the `thumbnail` / `video` text columns on the project
+ * row — see services/projects.js for the confirmed schema). If your
  * buckets are private, swap getPublicUrl() below for
  * supabase.storage.from(bucket).createSignedUrl(path, expiresInSeconds).
  */

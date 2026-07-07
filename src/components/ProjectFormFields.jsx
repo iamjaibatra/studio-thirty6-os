@@ -19,12 +19,15 @@ export default function ProjectFormFields({ form, set, categories, errors = {} }
           <label className={labelClass}>Category</label>
           <select
             className={cn(inputClass, "appearance-none")}
-            value={form.category_id}
-            onChange={(e) => set("category_id", e.target.value)}
+            value={form.category}
+            onChange={(e) => set("category", e.target.value)}
           >
             <option value="">Uncategorized</option>
+            {form.category && !categories.some((c) => c.name === form.category) && (
+              <option value={form.category}>{form.category} (no longer exists)</option>
+            )}
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option key={c.id} value={c.name}>
                 {c.name}
               </option>
             ))}

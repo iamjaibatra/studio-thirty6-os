@@ -54,16 +54,16 @@ export default function ProjectDetails() {
       {project && (
         <div className="max-w-3xl">
           <div className="aspect-video overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-elevated)]">
-            {project.video_url ? (
-              <video src={project.video_url} controls className="h-full w-full" />
-            ) : project.thumbnail_url ? (
-              <img src={project.thumbnail_url} alt={project.title} className="h-full w-full object-cover" />
+            {project.video ? (
+              <video src={project.video} controls className="h-full w-full" />
+            ) : project.thumbnail ? (
+              <img src={project.thumbnail} alt={project.title} className="h-full w-full object-cover" />
             ) : null}
           </div>
 
           <h1 className="mt-5 text-[22px] font-semibold text-[var(--color-ink)]">{project.title}</h1>
           <p className="mt-1 text-[13px] text-[var(--color-ink-muted)]">
-            {project.client} · {project.categories?.name || "Uncategorized"} · {project.year}
+            {project.client} · {project.category || "Uncategorized"} · {project.year}
             {project.duration ? ` · ${project.duration}` : ""}
           </p>
 

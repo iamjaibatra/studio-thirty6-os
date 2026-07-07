@@ -17,7 +17,7 @@ const EMPTY_FORM = {
   title: "",
   slug: "",
   client: "",
-  category_id: "",
+  category: "",
   year: CURRENT_YEAR,
   description: "",
   duration: "",
@@ -31,7 +31,7 @@ function initialFormFor(project) {
     title: project.title ?? "",
     slug: project.slug ?? "",
     client: project.client ?? "",
-    category_id: project.category_id ?? "",
+    category: project.category ?? "",
     year: project.year ?? CURRENT_YEAR,
     description: project.description ?? "",
     duration: project.duration ?? "",
@@ -61,8 +61,8 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const thumbnail = useUploadField("thumbnails", project?.thumbnail_url ?? null);
-  const video = useUploadField("videos", project?.video_url ?? null);
+  const thumbnail = useUploadField("thumbnails", project?.thumbnail ?? null);
+  const video = useUploadField("videos", project?.video ?? null);
 
   function set(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -110,9 +110,9 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
         ...form,
         slug,
         year: form.year ? Number(form.year) : null,
-        category_id: form.category_id || null,
-        thumbnail_url: thumbnailUrl,
-        video_url: videoUrl,
+        category: form.category || null,
+        thumbnail: thumbnailUrl,
+        video: videoUrl,
       });
 
       // Row is saved successfully at this point — safe to clean up

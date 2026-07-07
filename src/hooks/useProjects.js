@@ -13,7 +13,7 @@ import {
 
 const DEFAULT_FILTERS = {
   search: "",
-  categoryId: "",
+  category: "",
   year: "",
   featured: null,
   published: null,

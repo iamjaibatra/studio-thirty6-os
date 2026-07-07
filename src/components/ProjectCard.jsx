@@ -64,9 +64,9 @@ export default function ProjectCard({
       className="group relative cursor-pointer overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.6)]"
     >
       <div className="relative aspect-video overflow-hidden bg-[var(--color-elevated)]">
-        {project.thumbnail_url ? (
+        {project.thumbnail ? (
           <img
-            src={project.thumbnail_url}
+            src={project.thumbnail}
             alt={project.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
             loading="lazy"
@@ -139,7 +139,7 @@ export default function ProjectCard({
 
         <div className="mt-2.5 flex items-center justify-between text-[11.5px] text-[var(--color-ink-faint)]">
           <span className="truncate rounded-full bg-[var(--color-elevated-2)] px-2 py-0.5">
-            {project.categories?.name || "Uncategorized"}
+            {project.category || "Uncategorized"}
           </span>
           <div className="flex items-center gap-2.5">
             {project.duration && (
