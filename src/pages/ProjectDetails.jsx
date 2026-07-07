@@ -45,6 +45,12 @@ export default function ProjectDetails() {
         </p>
       )}
 
+      {!loading && !error && project === null && (
+        <p className="text-[13px] text-[var(--color-ink-muted)]">
+          This project doesn't exist or may have been deleted.
+        </p>
+      )}
+
       {project && (
         <div className="max-w-3xl">
           <div className="aspect-video overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-elevated)]">

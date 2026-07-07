@@ -19,6 +19,10 @@ export default function ConfirmDialog({
     try {
       await onConfirm();
       onClose();
+    } catch {
+      // The action itself is responsible for surfacing its own error
+      // (toast, etc). We only need to make sure the dialog doesn't throw
+      // further and leave the modal stuck or log an unhandled rejection.
     } finally {
       setSubmitting(false);
     }

@@ -7,6 +7,7 @@ import {
   duplicateProject,
   listProjects,
   setFeatured,
+  setPublished,
   updateProject,
 } from "../services/projects";
 
@@ -55,6 +56,8 @@ export function useProjects() {
 
   const refresh = useCallback(() => fetchProjects(filters), [fetchProjects, filters]);
 
+  // create/update are intentionally allowed to throw — ProjectForm awaits
+  // them and needs to know about failure so it can keep the modal open.
   async function handleCreate(payload) {
     const created = await toast.promise(createProject(payload), {
       loading: "Creating project…",
@@ -75,37 +78,63 @@ export function useProjects() {
     return updated;
   }
 
+  // Everything below is fired from menu clicks with no local error
+  // handling at the call site, so these swallow their own errors after
+  // showing a toast — otherwise a failure becomes an unhandled promise
+  // rejection in the console.
   async function handleDelete(project) {
-    await toast.promise(deleteProject(project), {
-      loading: "Deleting project…",
-      success: "Project deleted",
-      error: (err) => err.message || "Couldn't delete the project",
-    });
-    await refresh();
+    try {
+      await toast.promise(deleteProject(project), {
+        loading: "Deleting project…",
+        success: "Project deleted",
+        error: (err) => err.message || "Couldn't delete the project",
+      });
+      await refresh();
+    } catch {
+      // toast already shown
+    }
   }
 
   async function handleArchive(project) {
-    await toast.promise(archiveProject(project), {
-      loading: "Archiving project…",
-      success: "Project archived",
-      error: (err) => err.message || "Couldn't archive the project",
-    });
-    await refresh();
+    try {
+      await toast.promise(archiveProject(project), {
+        loading: "Archiving project…",
+        success: "Project archived",
+        error: (err) => err.message || "Couldn't archive the project",
+      });
+      await refresh();
+    } catch {
+      // toast already shown
+    }
   }
 
   async function handleDuplicate(project) {
-    await toast.promise(duplicateProject(project), {
-      loading: "Duplicating project…",
-      success: "Project duplicated",
-      error: (err) => err.message || "Couldn't duplicate the project",
-    });
-    await refresh();
+    try {
+      await toast.promise(duplicateProject(project), {
+        loading: "Duplicating project…",
+        success: "Project duplicated",
+        error: (err) => err.message || "Couldn't duplicate the project",
+      });
+      await refresh();
+    } catch {
+      // toast already shown
+    }
   }
 
   async function handleToggleFeatured(project) {
     try {
       await setFeatured(project.id, !project.featured);
       toast.success(!project.featured ? "Marked as featured" : "Removed from featured");
+      await refresh();
+    } catch (err) {
+      toast.error(err.message || "Couldn't update the project");
+    }
+  }
+
+  async function handleTogglePublished(project) {
+    try {
+      await setPublished(project.id, !project.published);
+      toast.success(!project.published ? "Project published" : "Project unpublished");
       await refresh();
     } catch (err) {
       toast.error(err.message || "Couldn't update the project");
@@ -126,5 +155,6 @@ export function useProjects() {
     archiveProject: handleArchive,
     duplicateProject: handleDuplicate,
     toggleFeatured: handleToggleFeatured,
+    togglePublished: handleTogglePublished,
   };
 }

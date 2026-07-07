@@ -1,6 +1,9 @@
 import { useRef } from "react";
-import { ImagePlus, Video, RotateCcw, Loader2, CheckCircle2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { ImagePlus, Video, RotateCcw, Loader2, CheckCircle2, X } from "lucide-react";
 import { cn } from "../utils/cn";
+
+const MAX_SIZE_MB = { image: 20, video: 1024 };
 
 /**
  * @param {"image"|"video"} kind
@@ -9,6 +12,7 @@ import { cn } from "../utils/cn";
  * @param {number} progress - 0-100
  * @param {"idle"|"uploading"|"done"|"error"} status
  * @param {(file: File) => void} onSelectFile
+ * @param {() => void} onRemove
  */
 export default function UploadProgress({
   kind = "image",
@@ -17,14 +21,28 @@ export default function UploadProgress({
   progress = 0,
   status = "idle",
   onSelectFile,
+  onRemove,
 }) {
   const inputRef = useRef(null);
   const accept = kind === "image" ? "image/*" : "video/*";
 
   function handleChange(e) {
     const file = e.target.files?.[0];
-    if (file) onSelectFile(file);
     e.target.value = "";
+    if (!file) return;
+
+    const maxMb = MAX_SIZE_MB[kind];
+    if (file.size > maxMb * 1024 * 1024) {
+      toast.error(`That file is too large — keep ${kind}s under ${maxMb}MB.`);
+      return;
+    }
+
+    onSelectFile(file);
+  }
+
+  function handleRemove(e) {
+    e.stopPropagation();
+    onRemove();
   }
 
   return (
@@ -67,6 +85,7 @@ export default function UploadProgress({
           <div className="flex flex-col items-center gap-1.5 text-[var(--color-ink-faint)]">
             {kind === "image" ? <ImagePlus size={20} /> : <Video size={20} />}
             <span className="text-[12px]">Click to upload</span>
+            <span className="text-[10.5px]">Up to {MAX_SIZE_MB[kind]}MB</span>
           </div>
         )}
 
@@ -89,6 +108,17 @@ export default function UploadProgress({
               <RotateCcw size={13} /> Replace
             </span>
           </div>
+        )}
+
+        {previewUrl && status !== "uploading" && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            aria-label={`Remove ${label.toLowerCase()}`}
+            className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-[var(--color-danger)]"
+          >
+            <X size={12} />
+          </button>
         )}
 
         {status === "done" && !previewUrl && (

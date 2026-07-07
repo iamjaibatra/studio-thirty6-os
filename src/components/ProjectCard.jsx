@@ -8,6 +8,8 @@ import {
   Copy,
   Play,
   Clock,
+  Globe,
+  EyeOff,
 } from "lucide-react";
 import { cn } from "../utils/cn";
 
@@ -18,6 +20,7 @@ export default function ProjectCard({
   onDelete,
   onArchive,
   onToggleFeatured,
+  onTogglePublished,
   onDuplicate,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,6 +43,11 @@ export default function ProjectCard({
 
   const actions = [
     { label: "Edit", icon: Pencil, onClick: () => onEdit(project) },
+    {
+      label: project.published ? "Unpublish" : "Publish",
+      icon: project.published ? EyeOff : Globe,
+      onClick: () => onTogglePublished(project),
+    },
     {
       label: project.featured ? "Unfeature" : "Feature",
       icon: Star,

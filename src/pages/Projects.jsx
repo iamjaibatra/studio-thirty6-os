@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import ProjectsToolbar from "../components/ProjectsToolbar";
 import ProjectGrid from "../components/ProjectGrid";
@@ -13,15 +14,18 @@ export default function Projects() {
   const {
     projects,
     loading,
+    error,
     filters,
     updateFilter,
     resetFilters,
+    refresh,
     createProject,
     updateProject,
     deleteProject,
     archiveProject,
     duplicateProject,
     toggleFeatured,
+    togglePublished,
   } = useProjects();
   const { categories } = useCategories();
 
@@ -75,6 +79,22 @@ export default function Projects() {
         onNewProject={openCreate}
       />
 
+      {error && !loading && (
+        <div className="mb-5 flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-danger-border,rgba(242,85,90,0.3))] bg-[var(--color-danger-soft)] px-4 py-3">
+          <div className="flex items-center gap-2.5 text-[13px] text-[var(--color-danger)]">
+            <AlertTriangle size={15} />
+            <span>Couldn't load projects: {error.message || "Unknown error"}</span>
+          </div>
+          <button
+            onClick={refresh}
+            className="flex items-center gap-1.5 rounded-[var(--radius-control)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--color-danger)] transition-colors hover:bg-black/10"
+          >
+            <RefreshCw size={12} />
+            Retry
+          </button>
+        </div>
+      )}
+
       <ProjectGrid
         projects={projects}
         loading={loading}
@@ -84,6 +104,7 @@ export default function Projects() {
         onArchive={requestArchive}
         onDuplicate={duplicateProject}
         onToggleFeatured={toggleFeatured}
+        onTogglePublished={togglePublished}
         onNewProject={openCreate}
       />
 

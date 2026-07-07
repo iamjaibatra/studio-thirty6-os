@@ -9,6 +9,7 @@ export default function ProjectGrid({
   onDelete,
   onArchive,
   onToggleFeatured,
+  onTogglePublished,
   onDuplicate,
   onNewProject,
 }) {
@@ -64,6 +65,7 @@ export default function ProjectGrid({
           onDelete={onDelete}
           onArchive={onArchive}
           onToggleFeatured={onToggleFeatured}
+          onTogglePublished={onTogglePublished}
           onDuplicate={onDuplicate}
         />
       ))}

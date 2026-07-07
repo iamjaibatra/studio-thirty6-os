@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { listCategories } from "../services/categories";
 
 export function useCategories() {
@@ -16,7 +17,10 @@ export function useCategories() {
         const data = await listCategories();
         if (!cancelled) setCategories(data);
       } catch (err) {
-        if (!cancelled) setError(err);
+        if (!cancelled) {
+          setError(err);
+          toast.error("Couldn't load categories — filters and the project form may be incomplete.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

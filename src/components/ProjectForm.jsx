@@ -6,14 +6,19 @@ import ProjectFormFields from "./ProjectFormFields";
 import { inputClass, labelClass } from "./ui/formStyles";
 import { useUploadField } from "../hooks/useUploadField";
 import { slugify, withUniqueSuffix } from "../utils/slug";
+import { deleteFile, pathFromPublicUrl } from "../services/storage";
 import { cn } from "../utils/cn";
+
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_YEAR = 1900;
+const MAX_YEAR = CURRENT_YEAR + 2;
 
 const EMPTY_FORM = {
   title: "",
   slug: "",
   client: "",
   category_id: "",
-  year: new Date().getFullYear(),
+  year: CURRENT_YEAR,
   description: "",
   duration: "",
   featured: false,
@@ -27,12 +32,21 @@ function initialFormFor(project) {
     slug: project.slug ?? "",
     client: project.client ?? "",
     category_id: project.category_id ?? "",
-    year: project.year ?? new Date().getFullYear(),
+    year: project.year ?? CURRENT_YEAR,
     description: project.description ?? "",
     duration: project.duration ?? "",
     featured: Boolean(project.featured),
     published: Boolean(project.published),
   };
+}
+
+function validate(form) {
+  const errors = {};
+  if (!form.title.trim()) errors.title = "Title is required.";
+  if (form.year && (form.year < MIN_YEAR || form.year > MAX_YEAR)) {
+    errors.year = `Year must be between ${MIN_YEAR} and ${MAX_YEAR}.`;
+  }
+  return errors;
 }
 
 /**
@@ -45,12 +59,14 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
   const [form, setForm] = useState(() => initialFormFor(project));
   const [slugTouched, setSlugTouched] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const thumbnail = useUploadField("thumbnails", project?.thumbnail_url ?? null);
   const video = useUploadField("videos", project?.video_url ?? null);
 
   function set(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: null }));
   }
 
   function handleTitleChange(value) {
@@ -63,11 +79,20 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
     set("slug", slugify(value));
   }
 
+  /** Best-effort cleanup of a replaced/removed file — never blocks the save. */
+  async function cleanupIfChanged(field, bucket) {
+    if (!field.changed || !field.initialUrl) return;
+    const path = pathFromPublicUrl(bucket, field.initialUrl);
+    if (path) deleteFile(bucket, path).catch(() => {});
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!form.title.trim()) {
-      toast.error("Give the project a title first.");
+    const fieldErrors = validate(form);
+    if (Object.keys(fieldErrors).length) {
+      setErrors(fieldErrors);
+      toast.error("Please fix the highlighted fields.");
       return;
     }
 
@@ -90,6 +115,11 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
         video_url: videoUrl,
       });
 
+      // Row is saved successfully at this point — safe to clean up
+      // whatever the new state replaced or removed.
+      cleanupIfChanged(thumbnail, "thumbnails");
+      cleanupIfChanged(video, "videos");
+
       onClose();
     } catch (err) {
       toast.error(err.message || "Something went wrong while saving.");
@@ -105,7 +135,7 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
       title={isEditing ? "Edit Project" : "New Project"}
       maxWidth="max-w-2xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <UploadProgress
             kind="image"
@@ -114,6 +144,7 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
             progress={thumbnail.progress}
             status={thumbnail.status}
             onSelectFile={thumbnail.selectFile}
+            onRemove={thumbnail.remove}
           />
           <UploadProgress
             kind="video"
@@ -122,6 +153,7 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
             progress={video.progress}
             status={video.status}
             onSelectFile={video.selectFile}
+            onRemove={video.remove}
           />
         </div>
 
@@ -129,12 +161,14 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
           <div>
             <label className={labelClass}>Title</label>
             <input
-              className={inputClass}
+              className={cn(inputClass, errors.title && "border-[var(--color-danger)]")}
               value={form.title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="The Last Light"
-              required
             />
+            {errors.title && (
+              <p className="mt-1 text-[11.5px] text-[var(--color-danger)]">{errors.title}</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>Slug</label>
@@ -147,7 +181,7 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
           </div>
         </div>
 
-        <ProjectFormFields form={form} set={set} categories={categories} />
+        <ProjectFormFields form={form} set={set} categories={categories} errors={errors} />
 
         <div className="flex justify-end gap-2 border-t border-[var(--color-border)] pt-4">
           <button

@@ -2,7 +2,7 @@ import Toggle from "./ui/Toggle";
 import { inputClass, labelClass } from "./ui/formStyles";
 import { cn } from "../utils/cn";
 
-export default function ProjectFormFields({ form, set, categories }) {
+export default function ProjectFormFields({ form, set, categories, errors = {} }) {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -34,10 +34,13 @@ export default function ProjectFormFields({ form, set, categories }) {
           <label className={labelClass}>Year</label>
           <input
             type="number"
-            className={inputClass}
+            className={cn(inputClass, errors.year && "border-[var(--color-danger)]")}
             value={form.year}
             onChange={(e) => set("year", e.target.value)}
           />
+          {errors.year && (
+            <p className="mt-1 text-[11.5px] text-[var(--color-danger)]">{errors.year}</p>
+          )}
         </div>
       </div>
 

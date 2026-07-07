@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import { deleteFile, pathFromPublicUrl } from "./storage";
+import { listCategories } from "./categories";
 
 /**
  * ASSUMED SCHEMA — this repo's live Supabase schema wasn't available while
@@ -24,10 +25,17 @@ import { deleteFile, pathFromPublicUrl } from "./storage";
  *
  * archive — same columns as `projects`, plus:
  *   archived_at    timestamptz, default now()
+ *
+ * Note: category names are attached client-side (see attachCategory below)
+ * rather than via a PostgREST embedded `categories:category_id(...)`
+ * select. That embedded syntax requires a real FK constraint to be
+ * registered with PostgREST's schema cache — if that's ever missing or
+ * out of sync, every project query breaks. Two plain queries merged in
+ * JS is slightly more work but can't fail that way.
  */
 
 const SELECT_COLUMNS =
-  "id, title, slug, client, category_id, year, description, duration, featured, published, thumbnail_url, video_url, created_at, updated_at, categories:category_id ( id, name )";
+  "id, title, slug, client, category_id, year, description, duration, featured, published, thumbnail_url, video_url, created_at, updated_at";
 
 const SORT_MAP = {
   newest: { column: "created_at", ascending: false },
@@ -67,7 +75,7 @@ export async function listProjects(options = {}) {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+  return attachCategories(data ?? []);
 }
 
 export async function getProject(id) {
@@ -75,10 +83,13 @@ export async function getProject(id) {
     .from("projects")
     .select(SELECT_COLUMNS)
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
-  return data;
+  if (!data) return null;
+
+  const [withCategory] = await attachCategories([data]);
+  return withCategory;
 }
 
 export async function createProject(payload) {
@@ -89,7 +100,8 @@ export async function createProject(payload) {
     .single();
 
   if (error) throw error;
-  return data;
+  const [withCategory] = await attachCategories([data]);
+  return withCategory;
 }
 
 export async function updateProject(id, payload) {
@@ -101,7 +113,8 @@ export async function updateProject(id, payload) {
     .single();
 
   if (error) throw error;
-  return data;
+  const [withCategory] = await attachCategories([data]);
+  return withCategory;
 }
 
 export async function deleteProject(project) {
@@ -134,13 +147,27 @@ export async function archiveProject(project) {
     .delete()
     .eq("id", project.id);
 
-  if (deleteError) throw deleteError;
+  if (deleteError) {
+    // Roll back the archive insert so we don't end up with the project
+    // living in both tables if the second step fails.
+    await supabase.from("archive").delete().eq("id", project.id);
+    throw deleteError;
+  }
 }
 
 export async function setFeatured(id, featured) {
   const { error } = await supabase
     .from("projects")
     .update({ featured, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function setPublished(id, published) {
+  const { error } = await supabase
+    .from("projects")
+    .update({ published, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) throw error;
@@ -166,4 +193,17 @@ function omit(obj, keys) {
   const result = { ...obj };
   keys.forEach((key) => delete result[key]);
   return result;
+}
+
+/** Attaches a `{ id, name }` categories object to each row, client-side. */
+async function attachCategories(rows) {
+  if (!rows.length) return rows;
+
+  const categories = await listCategories().catch(() => []);
+  const byId = new Map(categories.map((c) => [c.id, c]));
+
+  return rows.map((row) => ({
+    ...row,
+    categories: row.category_id ? byId.get(row.category_id) ?? null : null,
+  }));
 }
