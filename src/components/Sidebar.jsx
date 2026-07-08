@@ -4,6 +4,8 @@ export default function Sidebar() {
   const links = [
     ["Dashboard", "/dashboard"],
     ["Projects", "/projects"],
+    ["Media Library", "/media"],
+    ["Homepage", "/homepage"],
     ["Archive", "/archive"],
     ["Categories", "/categories"],
   ];
