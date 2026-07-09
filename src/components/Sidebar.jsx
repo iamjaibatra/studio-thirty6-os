@@ -6,6 +6,7 @@ export default function Sidebar() {
     ["Projects", "/projects"],
     ["Media Library", "/media"],
     ["Homepage", "/homepage"],
+    ["Transmit", "/transmit"],
     ["Archive", "/archive"],
     ["Categories", "/categories"],
   ];

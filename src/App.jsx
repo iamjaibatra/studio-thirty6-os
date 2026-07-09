@@ -2,6 +2,7 @@ import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
 import MediaLibrary from "./pages/MediaLibrary";
 import Homepage from "./pages/Homepage";
+import Transmit from "./pages/Transmit";
 import Archive from "./pages/Archive";
 import Categories from "./pages/Categories";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -31,6 +32,7 @@ export default function App() {
   <Route path="/projects/:id" element={<ProjectDetails />} />
   <Route path="/media" element={<MediaLibrary />} />
   <Route path="/homepage" element={<Homepage />} />
+  <Route path="/transmit" element={<Transmit />} />
   <Route path="/archive" element={<Archive />} />
   <Route path="/categories" element={<Categories />} />
       </Routes>
