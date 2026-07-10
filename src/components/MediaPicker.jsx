@@ -73,7 +73,7 @@ export default function MediaPicker({ label, type, value, onChange }) {
   );
 }
 
-function MediaPickerModal({ type, onClose, onSelect }) {
+export function MediaPickerModal({ type, onClose, onSelect }) {
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

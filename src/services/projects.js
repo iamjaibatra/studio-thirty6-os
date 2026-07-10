@@ -16,11 +16,19 @@ import { deleteFile, pathFromPublicUrl } from "./storage";
  *   description   text, nullable
  *   featured      boolean, nullable, default false
  *   thumbnail     text, nullable   <- column is `thumbnail`, not `thumbnail_url`
- *   video         text, nullable   <- column is `video`, not `video_url`
+ *   video         text, nullable   <- full video; column is `video`, not `video_url`
+ *   hover_video   text, nullable   <- added Phase 1: short loop for card hover preview
+ *   credits       jsonb, default '[]' <- added Phase 1: array of { role, name }
  *   duration      text, nullable
  *   published     boolean, nullable, default true
  *   created_at    timestamptz, nullable, default now()
  *   updated_at    timestamptz, nullable, default now()
+ *
+ * public.project_gallery (RLS enabled) — added Phase 1, join table so
+ * gallery images are reusable Media Library assets, not re-uploaded per
+ * project. Real FK to both projects.id and media.id (verified via
+ * pg_constraint), so the embedded PostgREST join below is safe to use.
+ *   id, project_id, media_id, sort_order, created_at
  *
  * public.archive (RLS enabled) — a lightweight generic archive table, NOT
  * a full mirror of `projects`. It can only hold a title/category/url
@@ -46,7 +54,7 @@ import { deleteFile, pathFromPublicUrl } from "./storage";
  */
 
 const SELECT_COLUMNS =
-  "id, title, slug, client, category, year, description, duration, featured, published, thumbnail, video, created_at, updated_at";
+  "id, title, slug, client, category, year, description, duration, featured, published, thumbnail, video, hover_video, credits, created_at, updated_at";
 
 const SORT_MAP = {
   newest: { column: "created_at", ascending: false },
@@ -131,11 +139,17 @@ export async function deleteProject(project) {
   // row already being gone, so these are not awaited into the throw path.
   const thumbPath = pathFromPublicUrl("thumbnails", project.thumbnail);
   const videoPath = pathFromPublicUrl("videos", project.video);
+  const hoverPath = pathFromPublicUrl("videos", project.hover_video);
 
   await Promise.allSettled([
     thumbPath ? deleteFile("thumbnails", thumbPath) : Promise.resolve(),
     videoPath ? deleteFile("videos", videoPath) : Promise.resolve(),
+    hoverPath ? deleteFile("videos", hoverPath) : Promise.resolve(),
   ]);
+
+  // Gallery join rows are ON DELETE CASCADE from projects, so no manual
+  // cleanup needed there — but the underlying media assets are reusable
+  // library items and shouldn't be deleted just because one project used them.
 }
 
 /**
@@ -211,7 +225,48 @@ export async function duplicateProject(project) {
     published: false,
   };
 
-  return createProject(copy);
+  const created = await createProject(copy);
+
+  try {
+    const gallery = await getProjectGallery(project.id);
+    if (gallery.length) await setProjectGallery(created.id, gallery.map((a) => a.id));
+  } catch {
+    // Gallery copy is a nice-to-have — don't fail the whole duplicate over it.
+  }
+
+  return created;
+}
+
+/**
+ * Gallery images for a project, ordered. Uses an embedded PostgREST join
+ * since project_gallery.media_id has a real FK to media.id (unlike the
+ * projects/categories case, this one's safe).
+ */
+export async function getProjectGallery(projectId) {
+  const { data, error } = await supabase
+    .from("project_gallery")
+    .select("id, sort_order, media:media_id ( id, name, url, type, alt_text )")
+    .eq("project_id", projectId)
+    .order("sort_order", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((row) => ({ galleryRowId: row.id, ...row.media }));
+}
+
+/**
+ * Replaces a project's entire gallery with the given ordered list of
+ * media IDs. Simpler and less error-prone than diffing add/remove/reorder
+ * separately, and galleries are small enough that this is cheap.
+ */
+export async function setProjectGallery(projectId, mediaIds) {
+  const { error: deleteError } = await supabase.from("project_gallery").delete().eq("project_id", projectId);
+  if (deleteError) throw deleteError;
+
+  if (!mediaIds.length) return;
+
+  const rows = mediaIds.map((media_id, i) => ({ project_id: projectId, media_id, sort_order: i }));
+  const { error: insertError } = await supabase.from("project_gallery").insert(rows);
+  if (insertError) throw insertError;
 }
 
 /** Strips fields Postgres doesn't have a column for before writes. */

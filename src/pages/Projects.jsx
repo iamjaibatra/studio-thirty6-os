@@ -48,10 +48,9 @@ export default function Projects() {
 
   async function handleSave(payload) {
     if (editingProject) {
-      await updateProject(editingProject.id, payload);
-    } else {
-      await createProject(payload);
+      return await updateProject(editingProject.id, payload);
     }
+    return await createProject(payload);
   }
 
   function requestDelete(project) {

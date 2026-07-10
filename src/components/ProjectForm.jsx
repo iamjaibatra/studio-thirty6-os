@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Modal from "./ui/Modal";
 import UploadProgress from "./UploadProgress";
 import ProjectFormFields from "./ProjectFormFields";
+import CreditsEditor from "./CreditsEditor";
+import GalleryPicker from "./GalleryPicker";
 import { inputClass, labelClass } from "./ui/formStyles";
 import { useUploadField } from "../hooks/useUploadField";
 import { slugify, withUniqueSuffix } from "../utils/slug";
 import { deleteFile, pathFromPublicUrl } from "../services/storage";
+import { getProjectGallery, setProjectGallery } from "../services/projects";
 import { cn } from "../utils/cn";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -60,9 +63,21 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
   const [slugTouched, setSlugTouched] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [credits, setCredits] = useState(() => (Array.isArray(project?.credits) ? project.credits : []));
+  const [gallery, setGallery] = useState([]);
+  const [galleryLoading, setGalleryLoading] = useState(isEditing);
 
   const thumbnail = useUploadField("thumbnails", project?.thumbnail ?? null);
   const video = useUploadField("videos", project?.video ?? null);
+  const hoverVideo = useUploadField("videos", project?.hover_video ?? null);
+
+  useEffect(() => {
+    if (!project?.id) return;
+    getProjectGallery(project.id)
+      .then(setGallery)
+      .catch((err) => toast.error(err.message || "Couldn't load the gallery"))
+      .finally(() => setGalleryLoading(false));
+  }, [project?.id]);
 
   function set(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -101,24 +116,35 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
 
     setSubmitting(true);
     try {
-      const [thumbnailUrl, videoUrl] = await Promise.all([
+      const [thumbnailUrl, videoUrl, hoverVideoUrl] = await Promise.all([
         thumbnail.upload(slug),
         video.upload(slug),
+        hoverVideo.upload(slug),
       ]);
 
-      await onSave({
+      const cleanCredits = credits.filter((c) => c.role.trim() || c.name.trim());
+
+      const savedProject = await onSave({
         ...form,
         slug,
         year: form.year ? Number(form.year) : null,
         category: form.category || null,
         thumbnail: thumbnailUrl,
         video: videoUrl,
+        hover_video: hoverVideoUrl,
+        credits: cleanCredits,
       });
+
+      const projectId = savedProject?.id || project?.id;
+      if (projectId) {
+        await setProjectGallery(projectId, gallery.map((a) => a.id));
+      }
 
       // Row is saved successfully at this point — safe to clean up
       // whatever the new state replaced or removed.
       cleanupIfChanged(thumbnail, "thumbnails");
       cleanupIfChanged(video, "videos");
+      cleanupIfChanged(hoverVideo, "videos");
 
       onClose();
     } catch (err) {
@@ -136,7 +162,7 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
       maxWidth="max-w-2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <UploadProgress
             kind="image"
             label="Thumbnail"
@@ -148,7 +174,16 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
           />
           <UploadProgress
             kind="video"
-            label="Video"
+            label="Hover preview video"
+            previewUrl={hoverVideo.previewUrl}
+            progress={hoverVideo.progress}
+            status={hoverVideo.status}
+            onSelectFile={hoverVideo.selectFile}
+            onRemove={hoverVideo.remove}
+          />
+          <UploadProgress
+            kind="video"
+            label="Full video"
             previewUrl={video.previewUrl}
             progress={video.progress}
             status={video.status}
@@ -156,6 +191,12 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
             onRemove={video.remove}
           />
         </div>
+
+        {galleryLoading ? (
+          <div className="h-20 animate-pulse rounded-[var(--radius-control)] bg-[var(--color-elevated)]" />
+        ) : (
+          <GalleryPicker assets={gallery} onChange={setGallery} />
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -182,6 +223,8 @@ export default function ProjectForm({ open, onClose, onSave, project, categories
         </div>
 
         <ProjectFormFields form={form} set={set} categories={categories} errors={errors} />
+
+        <CreditsEditor credits={credits} onChange={setCredits} />
 
         <div className="flex justify-end gap-2 border-t border-[var(--color-border)] pt-4">
           <button

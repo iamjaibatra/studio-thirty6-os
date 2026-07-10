@@ -3,6 +3,9 @@ import ProjectDetails from "./pages/ProjectDetails";
 import MediaLibrary from "./pages/MediaLibrary";
 import Homepage from "./pages/Homepage";
 import Transmit from "./pages/Transmit";
+import ArchivePage from "./pages/ArchivePage";
+import EditPage from "./pages/EditPage";
+import LensesPage from "./pages/LensesPage";
 import Archive from "./pages/Archive";
 import Categories from "./pages/Categories";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -33,6 +36,9 @@ export default function App() {
   <Route path="/media" element={<MediaLibrary />} />
   <Route path="/homepage" element={<Homepage />} />
   <Route path="/transmit" element={<Transmit />} />
+  <Route path="/archive-page" element={<ArchivePage />} />
+  <Route path="/edit-page" element={<EditPage />} />
+  <Route path="/lenses" element={<LensesPage />} />
   <Route path="/archive" element={<Archive />} />
   <Route path="/categories" element={<Categories />} />
       </Routes>

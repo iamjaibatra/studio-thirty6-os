@@ -7,6 +7,9 @@ export default function Sidebar() {
     ["Media Library", "/media"],
     ["Homepage", "/homepage"],
     ["Transmit", "/transmit"],
+    ["Archive Page", "/archive-page"],
+    ["Edit", "/edit-page"],
+    ["Lenses", "/lenses"],
     ["Archive", "/archive"],
     ["Categories", "/categories"],
   ];
