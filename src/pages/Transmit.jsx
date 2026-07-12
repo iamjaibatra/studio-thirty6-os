@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { AlertTriangle, RefreshCw, Plus, X } from "lucide-react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import MediaPicker from "../components/MediaPicker";
@@ -68,7 +69,11 @@ function TransmitForm({ sections, onSave }) {
 
   useEffect(() => {
     const ids = [content.background_video_media_id, content.background_image_media_id].filter(Boolean);
-    if (ids.length) getMediaByIds(ids).then(setMediaById);
+    if (ids.length) {
+      getMediaByIds(ids)
+        .then(setMediaById)
+        .catch((err) => toast.error(err.message || "Couldn't load some media previews"));
+    }
 
     listServices()
       .then((list) => setServices(list.filter((s) => s.enabled)))
