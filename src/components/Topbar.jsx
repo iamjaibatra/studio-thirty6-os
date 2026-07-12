@@ -18,34 +18,14 @@ export default function Topbar() {
   }
 
   return (
-    <div
-      style={{
-        height: 70,
-        background: "#181d25",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 30px",
-      }}
-    >
-      <h3>Studio Thirty6 OS</h3>
+    <div className="flex h-[60px] items-center justify-between bg-[#181d25] px-4 md:h-[70px] md:px-[30px]">
+      <h3 className="text-[15px] md:text-base">Studio Thirty6 OS</h3>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <span style={{ color: "#9a9aa6", fontSize: 13 }}>{user?.email || ""}</span>
+      <div className="flex items-center gap-2 md:gap-4">
+        <span className="hidden text-[13px] text-[#9a9aa6] sm:inline">{user?.email || ""}</span>
         <button
           onClick={handleSignOut}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "transparent",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 8,
-            color: "#9a9aa6",
-            padding: "7px 12px",
-            fontSize: 12.5,
-            cursor: "pointer",
-          }}
+          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-transparent px-2.5 py-1.5 text-[12.5px] text-[#9a9aa6] md:px-3"
         >
           <LogOut size={13} /> Sign out
         </button>
