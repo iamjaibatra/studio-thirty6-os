@@ -9,7 +9,7 @@ export default function TimelineStageForm({ open, onClose, onSave, stage }) {
   const isEditing = Boolean(stage);
   const [label, setLabel] = useState(() => stage?.label || "");
   const [description, setDescription] = useState(() => stage?.description || "");
-  const [videoAsset, setVideoAsset] = useState(() => stage?.video || null);
+  const [mediaAsset, setMediaAsset] = useState(() => stage?.media || null);
   const [projectId, setProjectId] = useState(() => stage?.project_id || "");
   const [projects, setProjects] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -24,7 +24,7 @@ export default function TimelineStageForm({ open, onClose, onSave, stage }) {
     const ok = await onSave({
       label,
       description: description || null,
-      video_media_id: videoAsset?.id || null,
+      media_id: mediaAsset?.id || null,
       project_id: projectId || null,
     });
     setSaving(false);
@@ -49,7 +49,7 @@ export default function TimelineStageForm({ open, onClose, onSave, stage }) {
           />
         </div>
 
-        <MediaPicker label="Preview video (optional)" type="video" value={videoAsset} onChange={setVideoAsset} />
+        <MediaPicker label="Stage media — image or video (optional)" value={mediaAsset} onChange={setMediaAsset} />
 
         <div>
           <label className={labelClass}>Linked project (optional)</label>

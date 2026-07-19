@@ -2,15 +2,16 @@ import { supabase } from "../lib/supabase";
 
 /**
  * public.timeline_stages — Edit page stages (Brief → Research → ... →
- * Delivery). video_media_id and project_id are optional per-stage
- * attachments; description was added in Phase 6.
+ * Delivery). media_id (renamed from video_media_id in Sprint 2 — now
+ * holds either an image or a video) and project_id are optional
+ * per-stage attachments; description was added in Phase 6.
  */
-const SELECT_COLUMNS = "id, label, description, stage_order, video_media_id, project_id";
+const SELECT_COLUMNS = "id, label, description, stage_order, media_id, project_id";
 
 export async function listTimelineStages() {
   const { data, error } = await supabase
     .from("timeline_stages")
-    .select(`${SELECT_COLUMNS}, video:video_media_id ( id, name, url ), project:project_id ( id, title )`)
+    .select(`${SELECT_COLUMNS}, media:media_id ( id, name, url, type ), project:project_id ( id, title )`)
     .order("stage_order", { ascending: true });
 
   if (error) throw error;
@@ -53,7 +54,7 @@ export async function reorderTimelineStages(orderedIds) {
 
 function toRow(payload) {
   const row = { ...payload };
-  delete row.video;
+  delete row.media;
   delete row.project;
   return row;
 }

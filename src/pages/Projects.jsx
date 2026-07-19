@@ -26,6 +26,7 @@ export default function Projects() {
     duplicateProject,
     toggleFeatured,
     togglePublished,
+    reorder,
   } = useProjects();
   const { categories } = useCategories();
 
@@ -97,6 +98,8 @@ export default function Projects() {
       <ProjectGrid
         projects={projects}
         loading={loading}
+        sortMode={filters.sort}
+        onReorder={reorder}
         onOpen={(project) => navigate(`/projects/${project.id}`)}
         onEdit={openEdit}
         onDelete={requestDelete}

@@ -1,9 +1,13 @@
-import { FolderOpen } from "lucide-react";
+import { useState } from "react";
+import { FolderOpen, GripVertical } from "lucide-react";
 import ProjectCard from "./ProjectCard";
+import { cn } from "../utils/cn";
 
 export default function ProjectGrid({
   projects,
   loading,
+  sortMode,
+  onReorder,
   onOpen,
   onEdit,
   onDelete,
@@ -13,6 +17,10 @@ export default function ProjectGrid({
   onDuplicate,
   onNewProject,
 }) {
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+  const draggable = sortMode === "manual";
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -54,21 +62,63 @@ export default function ProjectGrid({
     );
   }
 
+  function handleDrop(index) {
+    if (dragIndex === null || dragIndex === index) {
+      setDragIndex(null);
+      setOverIndex(null);
+      return;
+    }
+    const next = [...projects];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(index, 0, moved);
+    onReorder(next.map((p) => p.id));
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {projects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          project={project}
-          onOpen={onOpen}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onArchive={onArchive}
-          onToggleFeatured={onToggleFeatured}
-          onTogglePublished={onTogglePublished}
-          onDuplicate={onDuplicate}
-        />
-      ))}
+    <div>
+      {draggable && (
+        <p className="mb-3 flex items-center gap-1.5 text-[11.5px] text-[var(--color-ink-muted)]">
+          <GripVertical size={12} /> Drag cards to reorder — this is the exact order the public site displays.
+        </p>
+      )}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {projects.map((project, i) => (
+          <div
+            key={project.id}
+            draggable={draggable}
+            onDragStart={() => draggable && setDragIndex(i)}
+            onDragOver={(e) => {
+              if (!draggable) return;
+              e.preventDefault();
+              if (overIndex !== i) setOverIndex(i);
+            }}
+            onDrop={() => draggable && handleDrop(i)}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            className={cn(
+              draggable && "cursor-move",
+              draggable && dragIndex === i && "opacity-40",
+              draggable && overIndex === i && dragIndex !== null && dragIndex !== i &&
+                "rounded-[var(--radius-card)] ring-2 ring-[var(--color-accent)]"
+            )}
+          >
+            <ProjectCard
+              project={project}
+              onOpen={onOpen}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onArchive={onArchive}
+              onToggleFeatured={onToggleFeatured}
+              onTogglePublished={onTogglePublished}
+              onDuplicate={onDuplicate}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

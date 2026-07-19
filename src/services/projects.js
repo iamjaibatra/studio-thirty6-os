@@ -54,9 +54,10 @@ import { deleteFile, pathFromPublicUrl } from "./storage";
  */
 
 const SELECT_COLUMNS =
-  "id, title, slug, client, category, year, description, duration, featured, published, thumbnail, video, hover_video, credits, created_at, updated_at";
+  "id, title, slug, client, category, year, description, duration, featured, published, thumbnail, video, hover_video, credits, display_order, created_at, updated_at";
 
 const SORT_MAP = {
+  manual: { column: "display_order", ascending: true },
   newest: { column: "created_at", ascending: false },
   oldest: { column: "created_at", ascending: true },
   alphabetical: { column: "title", ascending: true },
@@ -73,7 +74,7 @@ const SORT_MAP = {
  * @param {keyof typeof SORT_MAP} [options.sort]
  */
 export async function listProjects(options = {}) {
-  const { search, category, year, featured, published, sort = "newest" } = options;
+  const { search, category, year, featured, published, sort = "manual" } = options;
 
   let query = supabase.from("projects").select(SELECT_COLUMNS);
 
@@ -89,7 +90,7 @@ export async function listProjects(options = {}) {
   if (featured !== undefined && featured !== null) query = query.eq("featured", featured);
   if (published !== undefined && published !== null) query = query.eq("published", published);
 
-  const { column, ascending } = SORT_MAP[sort] ?? SORT_MAP.newest;
+  const { column, ascending } = SORT_MAP[sort] ?? SORT_MAP.manual;
   query = query.order(column, { ascending });
 
   const { data, error } = await query;
@@ -109,14 +110,41 @@ export async function getProject(id) {
 }
 
 export async function createProject(payload) {
+  const row = { ...toRow(payload) };
+  if (row.display_order == null) {
+    row.display_order = await getNextDisplayOrder();
+  }
+
   const { data, error } = await supabase
     .from("projects")
-    .insert([toRow(payload)])
+    .insert([row])
     .select(SELECT_COLUMNS)
     .single();
 
   if (error) throw error;
   return data;
+}
+
+async function getNextDisplayOrder() {
+  const { data, error } = await supabase
+    .from("projects")
+    .select("display_order")
+    .order("display_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return 0;
+  return data.display_order + 1;
+}
+
+/**
+ * Persists a manually-reordered project list — the public site's
+ * Playback grid renders in this exact order.
+ */
+export async function reorderProjects(orderedIds) {
+  await Promise.all(
+    orderedIds.map((id, i) => supabase.from("projects").update({ display_order: i }).eq("id", id))
+  );
 }
 
 export async function updateProject(id, payload) {
@@ -219,7 +247,7 @@ export async function setPublished(id, published) {
 
 export async function duplicateProject(project) {
   const copy = {
-    ...omit(project, ["id", "created_at", "updated_at"]),
+    ...omit(project, ["id", "created_at", "updated_at", "display_order"]),
     title: `${project.title} (Copy)`,
     slug: `${project.slug}-copy-${Math.random().toString(36).slice(2, 6)}`,
     published: false,

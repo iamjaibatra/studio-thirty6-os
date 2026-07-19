@@ -6,6 +6,7 @@ import {
   deleteProject,
   duplicateProject,
   listProjects,
+  reorderProjects,
   setFeatured,
   setPublished,
   updateProject,
@@ -17,7 +18,7 @@ const DEFAULT_FILTERS = {
   year: "",
   featured: null,
   published: null,
-  sort: "newest",
+  sort: "manual",
 };
 
 export function useProjects() {
@@ -141,6 +142,24 @@ export function useProjects() {
     }
   }
 
+  /**
+   * Drag-and-drop reorder. Updates the visible order immediately (so the
+   * drag feels responsive) and persists in the background; only the
+   * "manual" sort is meaningfully reorderable, so this is a no-op
+   * otherwise to avoid silently fighting whatever sort is active.
+   */
+  async function handleReorder(orderedIds) {
+    if (filters.sort !== "manual") return;
+
+    setProjects((prev) => orderedIds.map((id) => prev.find((p) => p.id === id)));
+    try {
+      await reorderProjects(orderedIds);
+    } catch (err) {
+      toast.error(err.message || "Couldn't save the new order");
+      await refresh();
+    }
+  }
+
   return {
     projects,
     loading,
@@ -156,5 +175,6 @@ export function useProjects() {
     duplicateProject: handleDuplicate,
     toggleFeatured: handleToggleFeatured,
     togglePublished: handleTogglePublished,
+    reorder: handleReorder,
   };
 }

@@ -25,7 +25,7 @@ export default function MediaPicker({ label, type, value, onChange }) {
       <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-[var(--color-elevated)]">
           {value?.url ? (
-            type === "video" ? (
+            value.type === "video" ? (
               <video src={value.url} className="h-full w-full object-cover" muted />
             ) : (
               <img src={value.url} alt="" className="h-full w-full object-cover" />

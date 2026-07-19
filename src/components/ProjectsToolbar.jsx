@@ -4,6 +4,7 @@ import { cn } from "../utils/cn";
 const YEAR_RANGE = Array.from({ length: 16 }, (_, i) => new Date().getFullYear() + 1 - i);
 
 const SORT_OPTIONS = [
+  { value: "manual", label: "Manual (drag to reorder)" },
   { value: "newest", label: "Newest" },
   { value: "oldest", label: "Oldest" },
   { value: "alphabetical", label: "A–Z" },

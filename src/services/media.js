@@ -110,7 +110,7 @@ export async function countMediaUsage(mediaId) {
       .select("id", { count: "exact", head: true })
       .or(`icon_media_id.eq.${mediaId},image_media_id.eq.${mediaId},video_media_id.eq.${mediaId}`),
     supabase.from("archive_items").select("id", { count: "exact", head: true }).eq("media_id", mediaId),
-    supabase.from("timeline_stages").select("id", { count: "exact", head: true }).eq("video_media_id", mediaId),
+    supabase.from("timeline_stages").select("id", { count: "exact", head: true }).eq("media_id", mediaId),
   ]);
 
   return (

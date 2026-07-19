@@ -16,6 +16,7 @@ const EMPTY_HERO = {
   button_text: "",
   button_link: "playback",
   background_video_media_id: null,
+  background_video_mobile_media_id: null,
   fallback_image_media_id: null,
   ambient_video_media_id: null,
 };
@@ -69,7 +70,7 @@ function HomepageForm({ sections, onSave }) {
   const [savingHud, setSavingHud] = useState(false);
 
   useEffect(() => {
-    const ids = [hero.background_video_media_id, hero.fallback_image_media_id, hero.ambient_video_media_id].filter(
+    const ids = [hero.background_video_media_id, hero.background_video_mobile_media_id, hero.fallback_image_media_id, hero.ambient_video_media_id].filter(
       Boolean
     );
     if (ids.length) {
@@ -115,12 +116,18 @@ function HomepageForm({ sections, onSave }) {
           <section className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
             <h2 className="mb-4 text-[14px] font-semibold text-[var(--color-ink)]">Hero</h2>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <MediaPicker
-                label="Background video"
+                label="Background video (desktop)"
                 type="video"
                 value={hero.background_video_media_id ? mediaById[hero.background_video_media_id] : null}
                 onChange={(asset) => setMediaField("background_video_media_id", asset)}
+              />
+              <MediaPicker
+                label="Background video (mobile)"
+                type="video"
+                value={hero.background_video_mobile_media_id ? mediaById[hero.background_video_mobile_media_id] : null}
+                onChange={(asset) => setMediaField("background_video_mobile_media_id", asset)}
               />
               <MediaPicker
                 label="Fallback image"
@@ -135,6 +142,9 @@ function HomepageForm({ sections, onSave }) {
                 onChange={(asset) => setMediaField("ambient_video_media_id", asset)}
               />
             </div>
+            <p className="mt-2 text-[11.5px] text-[var(--color-ink-muted)]">
+              If no mobile video is set, the desktop video plays on mobile too.
+            </p>
 
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>

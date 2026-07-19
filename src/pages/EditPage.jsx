@@ -129,7 +129,7 @@ function StagesSection() {
                 <p className="truncate text-[11.5px] text-[var(--color-ink-muted)]">
                   {stage.description || "No description"}
                   {stage.project ? ` · Linked: ${stage.project.title}` : ""}
-                  {stage.video ? " · Has video" : ""}
+                  {stage.media ? ` · Has ${stage.media.type || "media"}` : ""}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1">
